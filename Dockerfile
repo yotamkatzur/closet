@@ -11,6 +11,10 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
+# NEXT_PUBLIC_* vars are inlined at build time. The production image always runs
+# with live Twilio SMS, so bake the flag in here (Railway's runtime var only
+# reaches server code, not the client bundle).
+ENV NEXT_PUBLIC_SMS_LIVE=1
 RUN npm run build
 
 FROM node:22-slim AS runner
