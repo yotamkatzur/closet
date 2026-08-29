@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: theme("colors.paper");
+  color: theme("colors.ink");
+  font-feature-settings: "kern";
+}
+
+/* RTL-first: default direction is set on <html dir="rtl">. These helpers keep
+   horizontal scrollers and carousels behaving. */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.masonry {
+  column-gap: 0.75rem;
+  column-count: 2;
+}
+.masonry > * {
+  break-inside: avoid;
+  margin-bottom: 0.75rem;
+}
+@media (min-width: 768px) {
+  .masonry {
+    column-count: 3;
+  }
+}
+@media (min-width: 1100px) {
+  .masonry {
+    column-count: 4;
+  }
+}
+
+.safe-bottom {
+  padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+}
