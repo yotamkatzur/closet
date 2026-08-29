@@ -41,7 +41,19 @@ function paymentRef(): string {
   return "CL-" + String(1000 + Math.floor(Math.random() * 9000));
 }
 
-function smsTo(userId: string, body: string) {
+// Notification SMS priority. Only "critical" texts go out when
+// SMS_NOTIFICATIONS=critical (the pilot default); "normal" ones stay in-app.
+type SmsPriority = "critical" | "normal";
+
+function smsEnabled(priority: SmsPriority): boolean {
+  const mode = config.smsNotifications;
+  if (mode === "off") return false;
+  if (mode === "all") return true;
+  return priority === "critical";
+}
+
+function smsTo(userId: string, body: string, priority: SmsPriority = "normal") {
+  if (!smsEnabled(priority)) return;
   const u = getUser(userId);
   if (!u) return;
   const base = process.env.PUBLIC_URL ?? "";
@@ -55,9 +67,10 @@ function notify(
   channel: "push" | "sms" | "push+sms",
   body: string,
   href: string | null,
+  priority: SmsPriority = "normal",
 ) {
   addNotification({ user_id: userId, kind, channel, body, href });
-  if (channel === "sms" || channel === "push+sms") smsTo(userId, body);
+  if (channel === "sms" || channel === "push+sms") smsTo(userId, body, priority);
   track("notification_sent", { userId, props: { type: kind, channel } });
 }
 
@@ -100,6 +113,7 @@ export async function sendRequest(
     "push+sms",
     `מישהי רוצה את השמלה שלך ב-Closet 👗 ${buyer?.display_name ?? ""} · מידה ${item.label_size} · ₪${Math.round(item.price_agorot / 100)}`,
     `/requests/${req.id}`,
+    "critical",
   );
   track("purchase_request_sent", {
     userId: buyerId,
@@ -198,6 +212,7 @@ export async function respondToRequest(
     "push+sms",
     `הבקשה אושרה! תאמו בוואטסאפ. קוד לתשלום: ${tx.payment_ref}`,
     "/deals",
+    "critical",
   );
   track("purchase_request_responded", {
     userId: actorId,

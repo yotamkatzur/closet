@@ -16,6 +16,18 @@ export const config = {
 
   matchRankingMinInventory: num("MATCH_RANKING_MIN_INVENTORY", 300),
 
+  // How much of the notification traffic goes out over SMS (Twilio costs money).
+  //   "all"      — every push+sms / sms notification also texts
+  //   "critical" — only the two that block the core flow: "someone wants your
+  //                dress" (to the seller) and "request approved + payment code"
+  //                (to the buyer). Everything else stays in-app only.
+  //   "off"      — no notification SMS at all (login codes still work)
+  // Login OTP is separate and always sends. Default is pilot-friendly.
+  smsNotifications: (process.env.SMS_NOTIFICATIONS ?? "critical") as
+    | "all"
+    | "critical"
+    | "off",
+
   sellerFeeBps: num("SELLER_FEE_BPS", 800), // recorded for v2, not collected
 
   // Payment & contact (payment-contact spec)
