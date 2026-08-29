@@ -131,7 +131,7 @@ export function OnboardingSheet({
                               ? "168-172"
                               : "173+",
                   });
-                  const r = await requestOtp(phone);
+                  const r = await requestOtp({ method: "phone", value: phone });
                   if (r.ok) {
                     track("auth_started");
                     setStep("code");
@@ -173,7 +173,8 @@ export function OnboardingSheet({
                 start(async () => {
                   setError(null);
                   const r = await completeOnboarding({
-                    phone,
+                    method: "phone",
+                    value: phone,
                     code,
                     heightCm: heightNum,
                     usualSize: size as Size,

@@ -9,6 +9,9 @@ import {
   savePaymentMethods,
   updateProfile,
   addFitHistoryEntry,
+  startEmailVerification,
+  confirmEmailVerification,
+  removeEmail,
 } from "@/lib/actions/profile";
 import { signOut } from "@/lib/actions/auth";
 import { PAYMENT_METHOD_HE, SHAPE_HE, VERDICT_HE, he } from "@/data/he";
@@ -22,6 +25,7 @@ export function ProfileForms({
   fitHistory,
   paymentMethods,
   bitPhone,
+  email,
 }: {
   bodyCard: BodyCard | null;
   displayName: string;
@@ -29,11 +33,12 @@ export function ProfileForms({
   fitHistory: FitHistory[];
   paymentMethods: PaymentMethod[];
   bitPhone: string | null;
+  email: string | null;
 }) {
   const router = useRouter();
-  const [open, setOpen] = useState<null | "body" | "profile" | "fit" | "pay">(
-    bodyCard ? null : "body",
-  );
+  const [open, setOpen] = useState<
+    null | "body" | "profile" | "fit" | "pay" | "email"
+  >(bodyCard ? null : "body");
   const [, start] = useTransition();
 
   return (
@@ -55,6 +60,24 @@ export function ProfileForms({
           name={displayName}
           city={city}
           onDone={() => { setOpen(null); router.refresh(); }}
+        />
+      )}
+
+      <Row
+        label={
+          email
+            ? `${he.onboarding.email.row} · ${email}`
+            : he.onboarding.email.row
+        }
+        onClick={() => setOpen(open === "email" ? null : "email")}
+      />
+      {open === "email" && (
+        <EmailForm
+          email={email}
+          onDone={() => {
+            setOpen(null);
+            router.refresh();
+          }}
         />
       )}
 
@@ -147,6 +170,104 @@ function PaymentForm({
       >
         {he.common.save}
       </Button>
+    </div>
+  );
+}
+
+function EmailForm({
+  email,
+  onDone,
+}: {
+  email: string | null;
+  onDone: () => void;
+}) {
+  const [step, setStep] = useState<"edit" | "code" | "done">("edit");
+  const [addr, setAddr] = useState(email ?? "");
+  const [code, setCode] = useState("");
+  const [err, setErr] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+
+  return (
+    <div className="space-y-3 rounded-xl border border-blush-100 p-3">
+      <p className="text-xs text-stone-400">{he.onboarding.email.hint}</p>
+
+      {step === "done" ? (
+        <p className="text-sm text-green-600">{he.onboarding.email.saved}</p>
+      ) : step === "code" ? (
+        <>
+          <p className="text-xs text-stone-400">
+            {he.onboarding.email.codeSent}
+          </p>
+          <Field label={he.onboarding.codeLabel}>
+            <input
+              className={inputClass}
+              inputMode="numeric"
+              dir="ltr"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="______"
+            />
+          </Field>
+          {err && <p className="text-xs text-red-500">{err}</p>}
+          <Button
+            disabled={pending}
+            onClick={() =>
+              start(async () => {
+                setErr(null);
+                const r = await confirmEmailVerification({ email: addr, code });
+                if (r.ok) {
+                  setStep("done");
+                  setTimeout(onDone, 1200);
+                } else setErr(r.error ?? "שגיאה");
+              })
+            }
+          >
+            {he.onboarding.verify}
+          </Button>
+        </>
+      ) : (
+        <>
+          <Field label={he.onboarding.email.label}>
+            <input
+              className={inputClass}
+              inputMode="email"
+              dir="ltr"
+              value={addr}
+              onChange={(e) => setAddr(e.target.value)}
+              placeholder={he.onboarding.email.placeholder}
+            />
+          </Field>
+          {err && <p className="text-xs text-red-500">{err}</p>}
+          <div className="flex gap-2">
+            <Button
+              disabled={pending || !addr.trim()}
+              onClick={() =>
+                start(async () => {
+                  setErr(null);
+                  const r = await startEmailVerification(addr);
+                  if (r.ok) setStep("code");
+                  else setErr(r.error ?? "שגיאה");
+                })
+              }
+            >
+              {he.onboarding.email.sendCode}
+            </Button>
+            {email && (
+              <button
+                className="rounded-xl border border-stone-200 px-3 text-sm text-stone-500"
+                onClick={() =>
+                  start(async () => {
+                    await removeEmail();
+                    onDone();
+                  })
+                }
+              >
+                {he.onboarding.email.remove}
+              </button>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

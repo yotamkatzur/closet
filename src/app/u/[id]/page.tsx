@@ -183,6 +183,7 @@ export default async function ClosetPage({
           fitHistory={listFitHistory(id)}
           paymentMethods={profile.payment_methods}
           bitPhone={profile.bit_phone}
+          email={profile.email ?? null}
         />
       )}
     </div>

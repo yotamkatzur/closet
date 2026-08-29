@@ -39,7 +39,8 @@ export interface DBShape {
   feed_impressions: FeedImpression[];
   kpi_snapshots: KpiSnapshot[];
   // pilot-only helper
-  otps: { phone: string; code: string; expires_at: string }[];
+  // login codes — `target` is the canonical phone (+972…) or lower-cased email
+  otps: { target: string; code: string; expires_at: string }[];
   // monotonic counter for analytics_events.id / feed_impressions.id
   _seq: { analytics: number; impressions: number };
 }

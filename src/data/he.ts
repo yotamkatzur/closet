@@ -53,6 +53,18 @@ export const he = {
     verify: "אימות",
     codeHintSms: "שלחנו לך קוד ב-SMS.",
     codeHintDev: "מצב פיתוח: הקוד מודפס בקונסולת השרת.",
+    email: {
+      row: "אימייל לכניסה",
+      hint: "הוסיפי אימייל כדי להתחבר בלי SMS בפעם הבאה.",
+      label: "כתובת אימייל",
+      placeholder: "you@example.com",
+      sendCode: "שליחת קוד למייל",
+      codeSent: "שלחנו קוד לכתובת הזו.",
+      verified: "אימייל מאומת:",
+      change: "שינוי",
+      remove: "הסרה",
+      saved: "האימייל נשמר. אפשר להתחבר איתו מעכשיו.",
+    },
     done: "מעולה! הפיד שלך מסודר עכשיו לפי הגוף שלך.",
     enrichLater:
       "אפשר להוסיף אחר כך תמונה, מבנה גוף ומידת חזייה — זה משפר את ההתאמות.",
@@ -298,6 +310,10 @@ export const he = {
   auth: {
     signInToContinue: "כניסה כדי להמשיך",
     signOut: "התנתקות",
+    withPhone: "טלפון",
+    withEmail: "אימייל",
+    emailPlaceholder: "you@example.com",
+    codeHintEmail: "שלחנו לך קוד במייל.",
   },
 
   report: {

@@ -3,9 +3,18 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth";
-import { addFitHistory, upsertBodyCard, updateUser } from "@/lib/db/repo";
+import {
+  addFitHistory,
+  consumeOtp,
+  getUserByEmail,
+  setOtp,
+  upsertBodyCard,
+  updateUser,
+} from "@/lib/db/repo";
 import { saveDataUrl } from "@/lib/media";
 import { normalizeIsraeliPhone } from "@/lib/phone";
+import { normalizeEmail } from "@/lib/email-addr";
+import { emailLive, sendEmail, sendLoginCode } from "@/lib/email";
 import {
   BODY_SHAPES,
   FIT_VERDICTS,
@@ -110,6 +119,60 @@ export async function savePaymentMethods(input: {
   }
   updateUser(user.id, { payment_methods: methods, bit_phone });
   revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+// --- email login channel ---------------------------------------------------
+const EMAIL_CODE_TTL_MS = 10 * 60 * 1000;
+
+export async function startEmailVerification(
+  emailRaw: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const user = await requireUser();
+  const email = normalizeEmail(emailRaw);
+  if (!email) return { ok: false, error: "כתובת אימייל לא תקינה" };
+
+  const taken = getUserByEmail(email);
+  if (taken && taken.id !== user.id)
+    return { ok: false, error: "האימייל הזה כבר משויך לחשבון אחר" };
+  if (taken && taken.id === user.id) return { ok: true }; // already verified
+
+  const code = String(Math.floor(100000 + Math.random() * 900000));
+  setOtp(email, code, EMAIL_CODE_TTL_MS);
+
+  if (!emailLive) {
+    // dev: setOtp already logged nothing — sendEmail logs to console
+    await sendEmail(email, `אימות אימייל ל-Closet: ${code}`, `הקוד לאימות: ${code}`);
+    return { ok: true };
+  }
+  const r = await sendLoginCode(email, code);
+  return r.ok ? { ok: true } : { ok: false, error: "לא הצלחנו לשלוח מייל" };
+}
+
+export async function confirmEmailVerification(input: {
+  email: string;
+  code: string;
+}): Promise<{ ok: boolean; error?: string }> {
+  const user = await requireUser();
+  const email = normalizeEmail(input.email);
+  if (!email) return { ok: false, error: "כתובת אימייל לא תקינה" };
+
+  const taken = getUserByEmail(email);
+  if (taken && taken.id !== user.id)
+    return { ok: false, error: "האימייל הזה כבר משויך לחשבון אחר" };
+
+  if (!consumeOtp(email, input.code.trim()))
+    return { ok: false, error: "קוד שגוי או שפג תוקפו" };
+
+  updateUser(user.id, { email });
+  revalidatePath("/u/" + user.id);
+  return { ok: true };
+}
+
+export async function removeEmail(): Promise<{ ok: boolean }> {
+  const user = await requireUser();
+  updateUser(user.id, { email: null });
+  revalidatePath("/u/" + user.id);
   return { ok: true };
 }
 

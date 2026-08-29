@@ -34,11 +34,15 @@ export function getUser(id: string): User | null {
 export function getUserByPhone(phone: string): User | null {
   return readDB().users.find((u) => u.phone === phone) ?? null;
 }
+export function getUserByEmail(email: string): User | null {
+  return readDB().users.find((u) => u.email === email) ?? null;
+}
 export function listUsers(): User[] {
   return readDB().users.slice().sort((a, b) => b.created_at.localeCompare(a.created_at));
 }
 export function createUser(input: {
   phone: string;
+  email?: string | null;
   display_name: string;
   city?: string | null;
   is_admin?: boolean;
@@ -47,6 +51,7 @@ export function createUser(input: {
     const u: User = {
       id: newId(),
       phone: input.phone,
+      email: input.email ?? null,
       display_name: input.display_name,
       avatar_url: null,
       city: input.city ?? null,
@@ -567,22 +572,26 @@ export function listKpiSnapshots(): KpiSnapshot[] {
 }
 
 // ----------------------------------------------------------------- OTP
-export function setOtp(phone: string, code: string, ttlMs: number): void {
+// `target` is a canonical phone (+972…) or a lower-cased email address.
+export function setOtp(target: string, code: string, ttlMs: number): void {
   mutate((db) => {
-    db.otps = db.otps.filter((o) => o.phone !== phone);
+    const now = Date.now();
+    db.otps = db.otps.filter(
+      (o) => o.target !== target && new Date(o.expires_at).getTime() > now,
+    );
     db.otps.push({
-      phone,
+      target,
       code,
-      expires_at: new Date(Date.now() + ttlMs).toISOString(),
+      expires_at: new Date(now + ttlMs).toISOString(),
     });
   });
 }
-export function consumeOtp(phone: string, code: string): boolean {
+export function consumeOtp(target: string, code: string): boolean {
   return mutate((db) => {
-    const o = db.otps.find((x) => x.phone === phone && x.code === code);
+    const o = db.otps.find((x) => x.target === target && x.code === code);
     if (!o) return false;
     if (new Date(o.expires_at).getTime() < Date.now()) return false;
-    db.otps = db.otps.filter((x) => x.phone !== phone);
+    db.otps = db.otps.filter((x) => x.target !== target);
     return true;
   });
 }

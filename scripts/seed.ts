@@ -122,6 +122,7 @@ const PAY_SETS = [["bit"], ["bit", "cash"], ["bit", "paybox"], ["cash"]];
 const admin = {
   id: id(),
   phone: "+972500000000",
+  email: null,
   display_name: "המייסדת (ניהול)",
   avatar_url: null,
   city: "תל אביב",
@@ -151,6 +152,7 @@ SELLERS.forEach((s, si) => {
   const u = {
     id: id(),
     phone: `+9725${String(phoneCounter++).padStart(8, "0")}`,
+    email: null,
     display_name: s.name,
     avatar_url: null,
     city: s.city,

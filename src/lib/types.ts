@@ -133,6 +133,7 @@ export const HANDOFF_METHODS: HandoffMethod[] = ["pickup", "shipping"];
 export interface User {
   id: string;
   phone: string;
+  email: string | null; // optional second login channel (verified by code)
   display_name: string;
   avatar_url: string | null;
   city: string | null;
