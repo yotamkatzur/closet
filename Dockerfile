@@ -18,6 +18,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
+# Docker sets HOSTNAME to the container id; Next standalone would bind only to
+# that and Railway can't reach it. Force binding on all interfaces.
+ENV HOSTNAME=0.0.0.0
 # Mutable state (JSON db + uploaded photos) lives here.
 # On Railway: attach a Volume and set its mount path to /data.
 ENV DATA_DIR=/data
