@@ -23,13 +23,14 @@ ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 # Mutable state (JSON db + uploaded photos) lives here.
 # On Railway: attach a Volume and set its mount path to /data.
+# Runs as root — Railway mounts the volume root-owned, and containers are
+# already isolated, so a non-root user only causes EACCES on the volume.
 ENV DATA_DIR=/data
-RUN useradd -m app && mkdir -p /data && chown app:app /data
+RUN mkdir -p /data
 
 COPY --from=build /app/public ./public
 COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
 
-USER app
 EXPOSE 3000
 CMD ["node", "server.js"]
